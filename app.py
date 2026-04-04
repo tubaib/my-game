@@ -1,133 +1,145 @@
 import streamlit as st
+import time
+import pandas as pd
 
-# --- 1. GAME CONFIGURATION ---
-# Using high-quality, direct Unsplash links for reliability
+# --- 1. CONFIGURATION & ASSETS ---
 GAMES = [
-    {
-        "url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", 
-        "targets": ["mountains", "peaks", "nature", "clouds", "landscape"],
-        "title": "The High Peaks"
-    },
-    {
-        "url": "https://images.unsplash.com/photo-1514565131-fce0801e5785", 
-        "targets": ["city", "skyline", "buildings", "urban", "night"],
-        "title": "Neon Metropolis"
-    },
-    {
-        "url": "https://images.unsplash.com/photo-1500622764614-be358d8d80c3", 
-        "targets": ["forest", "trees", "green", "woods", "sunlight"],
-        "title": "Sunlit Woodland"
-    }
+    {"url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", "targets": ["mountains", "peaks", "nature", "clouds", "landscape"]},
+    {"url": "https://images.unsplash.com/photo-1514565131-fce0801e5785", "targets": ["city", "skyline", "buildings", "urban", "night"]},
+    {"url": "https://images.unsplash.com/photo-1500622764614-be358d8d80c3", "targets": ["forest", "trees", "green", "woods", "sunlight"]}
 ]
 
-# --- 2. PAGE SETUP ---
-st.set_page_config(page_title="Prompt Master Pro", page_icon="🎨", layout="centered")
+st.set_page_config(page_title="Prompt Master: Elite", layout="centered")
 
-# Custom CSS for a professional "App" feel
+# --- 2. ADVANCED GLASS DESIGN ---
 st.markdown("""
     <style>
-    .main { background: linear-gradient(180deg, #0e1117 0%, #161b22 100%); }
-    .stButton>button { width: 100%; border-radius: 20px; height: 3em; background-color: #FF4B4B; color: white; font-weight: bold; border: none; }
-    .stButton>button:hover { background-color: #ff3333; border: none; color: white; }
-    .stTextInput>div>div>input { border-radius: 10px; }
-    .stTextArea>div>div>textarea { border-radius: 15px; }
-    img { border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); }
+    .stApp { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+    .stButton>button {
+        width: 100%; border-radius: 50px; height: 3.5em; 
+        background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+        color: white; border: none; font-weight: bold; transition: 0.3s;
+    }
+    .stButton>button:hover { transform: scale(1.02); box-shadow: 0px 0px 20px rgba(0, 210, 255, 0.5); }
+    .leaderboard-table { width: 100%; border-radius: 15px; overflow: hidden; background: rgba(0,0,0,0.3); }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. SESSION STATE INITIALIZATION ---
-if "step" not in st.session_state:
-    st.session_state.step = "setup"
-    st.session_state.players = []
-    st.session_state.round = 0
-    st.session_state.p_turn = 0  # We will use p_turn consistently
-    st.session_state.history = []
+# --- 3. SESSION STATE (The Lobby Logic) ---
+if "room_players" not in st.session_state:
+    st.session_state.room_players = []
+if "game_active" not in st.session_state:
+    st.session_state.game_active = False
+if "current_round" not in st.session_state:
+    st.session_state.current_round = 0
+if "turn_idx" not in st.session_state:
+    st.session_state.turn_idx = 0
+if "all_time_record" not in st.session_state:
+    st.session_state.all_time_record = [] # Global Record
 
-# --- 4. SETUP SCREEN ---
-if st.session_state.step == "setup":
-    st.title("🎨 Prompt Master Pro")
-    st.markdown("#### 3 Players • 3 Rounds • 1 Champion")
+# --- 4. NAVIGATION LOGIC ---
+def start_game():
+    st.session_state.game_active = True
+
+# --- 5. LOBBY SCREEN (Waiting for 5) ---
+if not st.session_state.game_active:
+    st.title("🛡️ Prompt Master: Elite Room")
+    st.markdown(f"### Lobby Status: `{len(st.session_state.room_players)} / 5 Players`")
     
     with st.container():
-        p1 = st.text_input("Player 1 Name", "Player 1")
-        p2 = st.text_input("Player 2 Name", "Player 2")
-        p3 = st.text_input("Player 3 Name", "Player 3")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        new_player = st.text_input("Enter your codename:", placeholder="e.g. ShadowWriter")
         
-        if st.button("🚀 START TOURNAMENT", use_container_width=True):
-            st.session_state.players = [{"name": n, "total": 0} for n in [p1, p2, p3]]
-            st.session_state.step = "playing"
-            st.rerun()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Join Room"):
+                if new_player and len(st.session_state.room_players) < 5:
+                    if new_player not in [p['name'] for p in st.session_state.room_players]:
+                        st.session_state.room_players.append({"name": new_player, "score": 0})
+                        st.rerun()
+        with col2:
+            if st.button("Reset Room"):
+                st.session_state.room_players = []
+                st.rerun()
+        
+        # Display Joined Players
+        if st.session_state.room_players:
+            st.write("---")
+            for p in st.session_state.room_players:
+                st.markdown(f"✅ **{p['name']}** joined the room.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 5. GAMEPLAY SCREEN ---
-elif st.session_state.step == "playing":
-    r_idx = st.session_state.round
-    p_idx = st.session_state.p_turn
-    player = st.session_state.players[p_idx]
+    if len(st.session_state.room_players) >= 5:
+        st.success("Room Full! Initializing Game...")
+        time.sleep(1)
+        st.session_state.game_active = True
+        st.rerun()
+
+# --- 6. GAMEPLAY SCREEN ---
+else:
+    r_idx = st.session_state.current_round
+    p_idx = st.session_state.turn_idx
     
-    st.subheader(f"Round {r_idx + 1} of 3")
-    # Total game progress (out of 9 turns)
-    st.progress((r_idx * 3 + p_idx + 1) / 9)
-    
-    st.image(GAMES[r_idx]["url"], use_container_width=True)
-    st.info(f"👤 **{player['name']}**, it is your turn to describe!")
-    
-    user_input = st.text_area("What do you see? (1-2 lines)", placeholder="Describe the scene...", key=f"input_{r_idx}_{p_idx}").lower()
-    
-    if st.button("SUBMIT PROMPT", use_container_width=True):
-        if len(user_input) < 15:
-            st.error("Your description is too short! Add more detail.")
-        else:
-            # Scoring Logic
+    if r_idx < 3: # 3 Rounds Total
+        player = st.session_state.room_players[p_idx]
+        
+        st.markdown(f"#### Round {r_idx + 1} • {player['name']}'s Turn")
+        st.progress((r_idx * 5 + p_idx + 1) / 15)
+        
+        st.image(GAMES[r_idx]["url"], use_container_width=True)
+        
+        user_input = st.text_area("Analyze the image and provide your prompt:", key=f"input_{r_idx}_{p_idx}")
+        
+        if st.button("Submit to Leaderboard"):
+            # Scoring
             targets = GAMES[r_idx]["targets"]
-            matches = [w for w in targets if w in user_input]
+            matches = [w for w in targets if w in user_input.lower()]
             score = int((len(matches) / len(targets)) * 100)
             
-            # Update Score and History
-            st.session_state.players[p_idx]["total"] += score
-            st.session_state.history.append({"round": r_idx, "name": player['name'], "score": score})
+            # Update internal score
+            st.session_state.room_players[p_idx]["score"] += score
             
-            # Rotation Logic (The Fix)
-            if p_idx < 2:
-                st.session_state.p_turn += 1  # Corrected variable name
+            # Turn Logic
+            if p_idx < 4:
+                st.session_state.turn_idx += 1
             else:
-                st.session_state.step = "round_review"
+                st.session_state.turn_idx = 0
+                st.session_state.current_round += 1
             st.rerun()
 
-# --- 6. ROUND REVIEW ---
-elif st.session_state.step == "round_review":
-    r_idx = st.session_state.round
-    st.title(f"📊 Round {r_idx + 1} Standings")
-    st.image(GAMES[r_idx]["url"], use_container_width=True)
-    
-    # Sort scores for this specific round
-    round_data = [h for h in st.session_state.history if h['round'] == r_idx]
-    round_data = sorted(round_data, key=lambda x: x['score'], reverse=True)
-    
-    for i, res in enumerate(round_data):
-        st.write(f"**{i+1}. {res['name']}** — `{res['score']} pts`")
-    
-    btn_text = "NEXT ROUND ➡️" if r_idx < 2 else "FINAL RESULTS 🏆"
-    if st.button(btn_text, use_container_width=True):
-        if st.session_state.round < 2:
-            st.session_state.round += 1
-            st.session_state.p_turn = 0
-            st.session_state.step = "playing"
-        else:
-            st.session_state.step = "final"
-        st.rerun()
-
-# --- 7. FINAL STANDINGS ---
-elif st.session_state.step == "final":
-    st.balloons()
-    st.title("🏆 Final Tournament Standings")
-    
-    # Sort players by total score
-    final_sorted = sorted(st.session_state.players, key=lambda x: x['total'], reverse=True)
-    for i, p in enumerate(final_sorted):
-        medal = "🥇" if i == 0 else "🥈" if i == 1 else "🥉"
-        st.subheader(f"{medal} {p['name']}: {p['total']} total pts")
+    # --- 7. FINAL RECORD & LEADERBOARD ---
+    else:
+        st.balloons()
+        st.title("🏆 Room Results")
         
-    st.divider()
-    if st.button("🔄 START NEW GAME", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+        final_players = sorted(st.session_state.room_players, key=lambda x: x['score'], reverse=True)
+        
+        # Add to All-Time Record
+        for p in final_players:
+            st.session_state.all_time_record.append({"Player": p['name'], "Total Score": p['score'], "Date": time.strftime("%Y-%m-%d")})
+        
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Current Room Rankings")
+        for i, p in enumerate(final_players):
+            st.write(f"#{i+1} **{p['name']}** — {p['score']} pts")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.subheader("📜 All-Time Hall of Fame")
+        df = pd.DataFrame(st.session_state.all_time_record)
+        if not df.empty:
+            df = df.sort_values(by="Total Score", ascending=False).head(10)
+            st.table(df)
+
+        if st.button("New Room"):
+            st.session_state.game_active = False
+            st.session_state.room_players = []
+            st.session_state.current_round = 0
+            st.rerun()
