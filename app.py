@@ -1,125 +1,131 @@
 import streamlit as st
+import random
 
-# --- GAME CONFIG ---
-GAMES = [
-    {"url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe", "targets": ["abstract", "geometry", "lines", "blue", "minimal"], "title": "Digital Dreamscape"},
-    {"url": "https://images.unsplash.com/photo-1605142859862-978be7eba909", "targets": ["architecture", "modern", "stairs", "white", "symmetry"], "title": "The Infinite Staircase"},
-    {"url": "https://images.unsplash.com/photo-1550684848-fac1c5b4e853", "targets": ["neon", "cyberpunk", "robot", "future", "glow"], "title": "Android Awakening"},
-    {"url": "https://images.unsplash.com/photo-1451187580459-43490279c0fa", "targets": ["earth", "space", "satellite", "network", "global"], "title": "Orbital Network"},
-    {"url": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809", "targets": ["gradient", "colors", "mesh", "soft", "vibrant"], "title": "Chromatic Flow"},
-    {"url": "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e", "targets": ["moon", "surreal", "floating", "night", "clouds"], "title": "Lunar Gravity"},
-    {"url": "https://images.unsplash.com/photo-1547891299-bc7837090333", "targets": ["water", "splash", "liquid", "macro", "crystal"], "title": "Liquid Motion"},
-    {"url": "https://images.unsplash.com/photo-1614728263952-84ea206f99b6", "targets": ["fire", "embers", "smoke", "hot", "particles"], "title": "Inferno Dust"}
+# ------------------ CONFIG ------------------
+PROMPTS = [
+    {
+        "title": "Abstract Vision",
+        "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe",
+        "answers": ["abstract", "geometry", "lines", "blue"]
+    },
+    {
+        "title": "Nature Guess",
+        "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+        "answers": ["mountain", "nature", "sky", "landscape"]
+    },
+    {
+        "title": "Tech Puzzle",
+        "image": "https://images.unsplash.com/photo-1518770660439-4636190af475",
+        "answers": ["technology", "circuit", "chip", "electronics"]
+    },
+    {
+        "title": "Art Mystery",
+        "image": "https://images.unsplash.com/photo-1504198458649-3128b932f49b",
+        "answers": ["art", "painting", "color", "creative"]
+    }
 ]
 
-st.set_page_config(page_title="Prompt Picasso", layout="centered")
+# ------------------ SESSION INIT ------------------
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
-# --- UI ---
-st.markdown("""
-<style>
-.stApp {
-    background: linear-gradient(rgba(10,10,20,0.9), rgba(10,10,20,0.9)),
-    url("https://images.unsplash.com/photo-1519681393784-d120267933ba");
-    background-size: cover;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
+if "user" not in st.session_state:
+    st.session_state.user = ""
 
-# --- STATE ---
-if "step" not in st.session_state:
-    st.session_state.step = "register"
-    st.session_state.players = []
-    st.session_state.current_player = 0
+if "score" not in st.session_state:
+    st.session_state.score = 0
+
+if "round" not in st.session_state:
     st.session_state.round = 0
 
-# --- REGISTER ---
-if st.session_state.step == "register":
+if "selected_prompt" not in st.session_state:
+    st.session_state.selected_prompt = None
 
-    st.title("🎨 Prompt Picasso")
+if "leaderboard" not in st.session_state:
+    st.session_state.leaderboard = []
 
-    name = st.text_input("Enter Your Name")
+# ------------------ HOME PAGE ------------------
+def home():
+    st.title("🎡 Gen AI Carnival")
+    st.subheader("From Prompts to Possibilities")
 
-    if st.button("Join Game"):
+    name = st.text_input("Enter your name")
+
+    if st.button("Start Game"):
         if name:
-            if len(st.session_state.players) >= 5:
-                st.error("Max 5 players allowed")
-            elif name in [p["name"] for p in st.session_state.players]:
-                st.warning("Name already exists")
-            else:
-                st.session_state.players.append({
-                    "name": name,
-                    "scores": [0]*8,
-                    "total": 0
-                })
-                st.rerun()
+            st.session_state.user = name
+            st.session_state.page = "dashboard"
+        else:
+            st.warning("Please enter your name")
 
-    if st.session_state.players:
-        st.write("### Players Joined:")
-        for p in st.session_state.players:
-            st.success(p["name"])
+# ------------------ DASHBOARD ------------------
+def dashboard():
+    st.title(f"Welcome {st.session_state.user} 🎉")
+    st.subheader("Choose a Prompt Challenge")
 
-        if st.button("🚀 Start Game"):
-            st.session_state.step = "game"
-            st.rerun()
+    for i, prompt in enumerate(PROMPTS):
+        if st.button(prompt["title"]):
+            st.session_state.selected_prompt = i
+            st.session_state.page = "game"
+            st.session_state.round = 0
+            st.session_state.score = 0
 
-# --- GAME ---
-elif st.session_state.step == "game":
+# ------------------ GAME PAGE ------------------
+def game():
+    prompt = PROMPTS[st.session_state.selected_prompt]
 
-    r = st.session_state.round
-    p = st.session_state.current_player
-    player = st.session_state.players[p]
+    st.title(f"🎯 {prompt['title']}")
+    st.write(f"Round: {st.session_state.round + 1}/3")
 
-    st.subheader(f"Round {r+1}: {GAMES[r]['title']}")
-    st.write(f"🎯 Player: **{player['name']}**")
+    st.image(prompt["image"], use_container_width=True)
 
-    st.image(GAMES[r]["url"], use_container_width=True)
-
-    text = st.text_area("Describe the image").lower()
+    guess = st.text_input("Enter your guess")
 
     if st.button("Submit"):
-
-        if len(text) < 5:
-            st.error("Too short!")
+        if guess.lower() in prompt["answers"]:
+            st.success("✅ Correct!")
+            st.session_state.score += 10
         else:
-            targets = GAMES[r]["targets"]
-            score = sum([1 for w in targets if w in text]) * 20
+            st.error("❌ Wrong!")
 
-            player["scores"][r] = score
-            player["total"] += score
+        st.session_state.round += 1
 
-            # next player
-            if p < len(st.session_state.players) - 1:
-                st.session_state.current_player += 1
-            else:
-                st.session_state.current_player = 0
-                st.session_state.round += 1
-
-            # finish all rounds
-            if st.session_state.round >= 8:
-                st.session_state.step = "final"
-
+        if st.session_state.round >= 3:
+            # Save to leaderboard
+            st.session_state.leaderboard.append({
+                "name": st.session_state.user,
+                "score": st.session_state.score
+            })
+            st.session_state.page = "leaderboard"
+        else:
             st.rerun()
 
-# --- FINAL ---
-elif st.session_state.step == "final":
+# ------------------ LEADERBOARD ------------------
+def leaderboard():
+    st.title("🏆 Leaderboard")
 
-    st.title("🏆 Final Leaderboard")
+    # Sort leaderboard
+    sorted_board = sorted(
+        st.session_state.leaderboard,
+        key=lambda x: x["score"],
+        reverse=True
+    )
 
-    sorted_players = sorted(st.session_state.players, key=lambda x: x["total"], reverse=True)
+    for i, entry in enumerate(sorted_board):
+        st.write(f"{i+1}. {entry['name']} - {entry['score']} points")
 
-    for i, p in enumerate(sorted_players):
-        medal = ["🥇", "🥈", "🥉"]
-        icon = medal[i] if i < 3 else "🏅"
-        st.write(f"{icon} {p['name']} → {p['total']} pts")
+    if st.button("Play Again"):
+        st.session_state.page = "dashboard"
 
-    st.divider()
+# ------------------ ROUTER ------------------
+if st.session_state.page == "home":
+    home()
 
-    st.subheader("🔗 Revisit Prompts")
+elif st.session_state.page == "dashboard":
+    dashboard()
 
-    for i, game in enumerate(GAMES):
-        st.markdown(f"[👉 Go to Round {i+1} - {game['title']}]({game['url']})")
+elif st.session_state.page == "game":
+    game()
 
-    if st.button("Restart"):
-        st.session_state.clear()
-        st.rerun()
+elif st.session_state.page == "leaderboard":
+    leaderboard()
