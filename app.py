@@ -227,10 +227,10 @@ html, body, [class*="css"] {
 
 /* ── Input overrides ── */
 [data-testid="stTextInput"] input {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
     border-radius: 12px !important;
-    color: #e2e8f0 !important;
+    color: #111111 !important;
     font-size: 16px !important;
     padding: 12px 16px !important;
     height: 50px !important;
@@ -239,7 +239,7 @@ html, body, [class*="css"] {
 [data-testid="stTextInput"] input:focus {
     border-color: rgba(99,102,241,0.6) !important;
     box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
-    background: rgba(255,255,255,0.07) !important;
+    background: #ffffff !important;
 }
 [data-testid="stTextInput"] label {
     color: #64748b !important;
