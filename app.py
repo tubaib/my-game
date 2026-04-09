@@ -14,104 +14,79 @@ GAMES = [
 
 st.set_page_config(page_title="Prompt Picasso", layout="centered")
 
-# --- 2. UI DESIGN ---
+# --- 2. GET ROUND FROM URL ---
+query_params = st.query_params
+round_no = int(query_params.get("round", 1)) - 1  # 0-based
+
+# --- 3. UI DESIGN ---
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bungee+Spice&family=Space+Grotesk:wght@300;700&display=swap');
-
 .stApp {
     background: linear-gradient(rgba(10,10,20,0.9), rgba(10,10,20,0.9)),
-    url("https://images.unsplash.com/photo-1506744038136-46273834b3fb");
+    url("https://images.unsplash.com/photo-1519681393784-d120267933ba");
     background-size: cover;
-    background-attachment: fixed;
     color: white;
-    font-family: 'Space Grotesk', sans-serif;
-}
-
-.title {
-    font-family: 'Bungee Spice';
-    text-align: center;
-    font-size: 3rem;
-}
-
-.card {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
-    margin-bottom: 20px;
-}
-
-button {
-    border-radius: 10px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SESSION STATE ---
-if "step" not in st.session_state:
-    st.session_state.step = "lobby"
-    st.session_state.round = 0
-    st.session_state.players = []
-    st.session_state.round_players = []
-    st.session_state.turn = 0
+# --- 4. ROUND STORAGE ---
+if "round_data" not in st.session_state:
+    st.session_state.round_data = {}
 
-# --- 4. LOBBY ---
-if st.session_state.step == "lobby":
+if round_no not in st.session_state.round_data:
+    st.session_state.round_data[round_no] = {
+        "players": [],
+        "started": False,
+        "turn": 0,
+        "finished": False
+    }
 
-    st.markdown('<h1 class="title">🎨 PROMPT PICASSO</h1>', unsafe_allow_html=True)
-    st.subheader(f"Round {st.session_state.round + 1} Registration")
+room = st.session_state.round_data[round_no]
 
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+st.title(f"🎨 Prompt Picasso - Round {round_no + 1}")
+st.subheader(GAMES[round_no]["title"])
 
-        name = st.text_input("Enter Player Name")
+# --- 5. LOBBY ---
+if not room["started"]:
 
-        if st.button("Join Room"):
-            if name:
-                if len(st.session_state.round_players) >= 5:
-                    st.error("Max 5 players allowed!")
-                elif name in [p["name"] for p in st.session_state.round_players]:
-                    st.warning("Name already exists!")
-                else:
-                    st.session_state.round_players.append({"name": name, "score": 0})
-                    st.rerun()
+    name = st.text_input("Enter Player Name")
 
-        # Show players
-        if st.session_state.round_players:
-            st.write("### Players in Room:")
-            for p in st.session_state.round_players:
-                st.success(p["name"])
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- ADMIN PANEL ---
-    with st.expander("🔐 ADMIN PANEL"):
-        st.write(f"Players: {len(st.session_state.round_players)} / 5")
-
-        if len(st.session_state.round_players) < 1:
-            st.error("Minimum 1 player required")
-        else:
-            if st.button("Start Game"):
-                st.session_state.step = "game"
-                st.session_state.turn = 0
+    if st.button("Join Round"):
+        if name:
+            if len(room["players"]) >= 5:
+                st.error("Max 5 players allowed")
+            elif name in [p["name"] for p in room["players"]]:
+                st.warning("Name already exists")
+            else:
+                room["players"].append({"name": name, "score": 0})
                 st.rerun()
 
-        if st.button("Reset Lobby"):
-            st.session_state.round_players = []
+    # Show players
+    if room["players"]:
+        st.write("### Players Joined:")
+        for p in room["players"]:
+            st.success(p["name"])
+
+    # --- ADMIN CONTROL ---
+    st.markdown("### 🔐 Admin Panel")
+
+    if len(room["players"]) < 1:
+        st.error("Minimum 1 player required")
+    else:
+        if st.button("🚀 Start Round"):
+            room["started"] = True
             st.rerun()
 
-# --- 5. GAME ---
-elif st.session_state.step == "game":
+    st.stop()
 
-    r = st.session_state.round
-    t = st.session_state.turn
-    player = st.session_state.round_players[t]
+# --- 6. GAMEPLAY ---
+if not room["finished"]:
 
-    st.subheader(f"Round {r+1}: {GAMES[r]['title']}")
-    st.write(f"🎯 Player: **{player['name']}**")
+    player = room["players"][room["turn"]]
 
-    st.image(GAMES[r]["url"], use_container_width=True)
+    st.write(f"🎯 Turn: **{player['name']}**")
+    st.image(GAMES[round_no]["url"], use_container_width=True)
 
     text = st.text_area("Describe the image").lower()
 
@@ -120,57 +95,21 @@ elif st.session_state.step == "game":
         if len(text) < 5:
             st.error("Too short!")
         else:
-            targets = GAMES[r]["targets"]
+            targets = GAMES[round_no]["targets"]
             score = sum([1 for w in targets if w in text]) * 20
 
-            st.session_state.round_players[t]["score"] = score
+            room["players"][room["turn"]]["score"] = score
 
-            # Next player
-            if t < len(st.session_state.round_players) - 1:
-                st.session_state.turn += 1
+            if room["turn"] < len(room["players"]) - 1:
+                room["turn"] += 1
             else:
-                st.session_state.step = "result"
+                room["finished"] = True
 
             st.rerun()
 
-# --- 6. ROUND RESULT ---
-elif st.session_state.step == "result":
+# --- 7. RESULT ---
+if room["finished"]:
+    st.subheader("🏆 Round Results")
 
-    st.subheader(f"🏆 Round {st.session_state.round + 1} Results")
-
-    for p in st.session_state.round_players:
+    for p in room["players"]:
         st.write(f"{p['name']} → {p['score']} pts")
-
-        # Add to leaderboard
-        found = next((x for x in st.session_state.players if x["name"] == p["name"]), None)
-
-        if found:
-            found["total"] += p["score"]
-        else:
-            st.session_state.players.append({"name": p["name"], "total": p["score"]})
-
-    if st.button("Next Round"):
-        if st.session_state.round < 7:
-            st.session_state.round += 1
-            st.session_state.round_players = []  # 🔥 IMPORTANT: fresh registration
-            st.session_state.step = "lobby"
-        else:
-            st.session_state.step = "final"
-
-        st.rerun()
-
-# --- 7. FINAL ---
-elif st.session_state.step == "final":
-
-    st.title("🏁 FINAL LEADERBOARD")
-
-    sorted_players = sorted(st.session_state.players, key=lambda x: x["total"], reverse=True)
-
-    for i, p in enumerate(sorted_players):
-        medal = ["🥇", "🥈", "🥉"]
-        icon = medal[i] if i < 3 else "🏅"
-        st.write(f"{icon} {p['name']} → {p['total']} pts")
-
-    if st.button("Restart Game"):
-        st.session_state.clear()
-        st.rerun()
