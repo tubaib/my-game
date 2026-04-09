@@ -1,29 +1,29 @@
 import streamlit as st
 import time
 import streamlit.components.v1 as components
- 
+
 # CONFIG
 st.set_page_config(page_title="Gen AI Carnival", page_icon="🎡", layout="wide")
- 
+
 # GLOBAL CSS
 st.markdown("""
 <style>
 /* ── Reset & base ── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
 [data-testid="stAppViewContainer"] {
     background: #0a0a12;
     min-height: 100vh;
 }
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stSidebar"] { display: none; }
- 
+
 /* ── Typography ── */
- 
+
 html, body, [class*="css"] {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
- 
+
 /* ── Animated starfield background ── */
 [data-testid="stAppViewContainer"]::before {
     content: '';
@@ -36,7 +36,7 @@ html, body, [class*="css"] {
     pointer-events: none;
     z-index: 0;
 }
- 
+
 /* ── Page content sits above bg ── */
 [data-testid="block-container"] {
     position: relative;
@@ -45,7 +45,7 @@ html, body, [class*="css"] {
     max-width: 1200px !important;
     margin: 0 auto;
 }
- 
+
 /* ── HERO title ── */
 .hero-badge {
     display: inline-block;
@@ -76,7 +76,7 @@ html, body, [class*="css"] {
     font-weight: 400;
     margin-bottom: 40px;
 }
- 
+
 /* ── Glass card ── */
 .glass-card {
     background: rgba(255,255,255,0.04);
@@ -92,7 +92,7 @@ html, body, [class*="css"] {
     transform: translateY(-4px);
     box-shadow: 0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.2);
 }
- 
+
 /* ── Challenge card ── */
 .challenge-card {
     background: rgba(255,255,255,0.03);
@@ -128,7 +128,7 @@ html, body, [class*="css"] {
     color: #475569;
     font-weight: 400;
 }
- 
+
 /* ── Avatar ── */
 .avatar {
     width: 56px;
@@ -145,7 +145,7 @@ html, body, [class*="css"] {
     margin: 0 auto 16px;
     box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
 }
- 
+
 /* ── Timer ring ── */
 .timer-ring-wrap {
     display: flex;
@@ -168,7 +168,7 @@ html, body, [class*="css"] {
     letter-spacing: 0.1em;
 }
 .timer-ring.danger { color: #f87171; text-shadow: 0 0 30px rgba(248,113,113,0.6); }
- 
+
 /* ── Score pill ── */
 .score-pill {
     display: inline-flex;
@@ -182,7 +182,7 @@ html, body, [class*="css"] {
     font-weight: 600;
     color: #a5b4fc;
 }
- 
+
 /* ── Leaderboard row ── */
 .lb-row {
     display: flex;
@@ -224,7 +224,7 @@ html, body, [class*="css"] {
     border-radius: 8px;
     padding: 4px 14px;
 }
- 
+
 /* ── Input overrides ── */
 [data-testid="stTextInput"] input {
     background: rgba(255,255,255,0.05) !important;
@@ -247,7 +247,7 @@ html, body, [class*="css"] {
     font-weight: 500 !important;
     letter-spacing: 0.05em !important;
 }
- 
+
 /* ── Button overrides ── */
 .stButton > button {
     width: 100% !important;
@@ -271,7 +271,7 @@ html, body, [class*="css"] {
 .stButton > button:active {
     transform: translateY(0) !important;
 }
- 
+
 /* ── Success / Error override ── */
 [data-testid="stSuccess"] {
     background: rgba(52,211,153,0.1) !important;
@@ -291,19 +291,19 @@ html, body, [class*="css"] {
     border-radius: 12px !important;
     color: #fde68a !important;
 }
- 
+
 /* ── Image ── */
 [data-testid="stImage"] img {
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
- 
+
 /* ── Divider ── */
 hr {
     border-color: rgba(255,255,255,0.06) !important;
     margin: 24px 0 !important;
 }
- 
+
 /* ── Section heading ── */
 .section-heading {
     font-size: 13px;
@@ -313,7 +313,7 @@ hr {
     letter-spacing: 0.1em;
     margin-bottom: 20px;
 }
- 
+
 /* ── Stat row ── */
 .stat-row {
     display: flex;
@@ -345,11 +345,11 @@ hr {
 }
 </style>
 """, unsafe_allow_html=True)
- 
+
 # SOUND
 def play_sound(url):
     components.html(f'<audio autoplay><source src="{url}" type="audio/mp3"></audio>', height=0)
- 
+
 # DATA
 PROMPTS = [
     {"title": "Mountain",  "emoji": "🏔️",  "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80", "answers": ["mountain"]},
@@ -361,7 +361,7 @@ PROMPTS = [
     {"title": "Forest",    "emoji": "🌳",  "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80", "answers": ["tree","forest"]},
     {"title": "Car",       "emoji": "🚗",  "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&q=80", "answers": ["car"]},
 ]
- 
+
 # SESSION
 for k, v in {
     "page": "home", "user": "", "selected_prompt": None,
@@ -369,7 +369,7 @@ for k, v in {
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
- 
+
 # HOME
 def home():
     _, col, _ = st.columns([1, 2, 1])
@@ -380,16 +380,16 @@ def home():
             <div class="hero-sub">From Prompts to Possibilities</div>
         </div>
         """, unsafe_allow_html=True)
- 
+
         st.markdown("""
         <div class="stat-row">
             <div class="stat-chip"><div class="stat-chip-val">8</div><div class="stat-chip-lbl">Challenges</div></div>
             <div class="stat-chip"><div class="stat-chip-val">10</div><div class="stat-chip-lbl">Max Points</div></div>
         </div>
         """, unsafe_allow_html=True)
- 
+
         name = st.text_input("", placeholder="Enter your name to begin…", label_visibility="collapsed")
- 
+
         if st.button("Enter the Carnival  →"):
             if name.strip():
                 st.session_state.user = name.strip()
@@ -397,7 +397,7 @@ def home():
                 st.rerun()
             else:
                 st.warning("Please enter your name first.")
- 
+
 # DASHBOARD
 def dashboard():
     initials = "".join(w[0].upper() for w in st.session_state.user.split()[:2])
@@ -415,9 +415,9 @@ def dashboard():
         </div>
     </div>
     """, unsafe_allow_html=True)
- 
+
     st.markdown('<div class="section-heading">Choose your challenge</div>', unsafe_allow_html=True)
- 
+
     cols = st.columns(4)
     for i, prompt in enumerate(PROMPTS):
         with cols[i % 4]:
@@ -435,13 +435,13 @@ def dashboard():
                 st.session_state.start_time = time.time()
                 st.session_state.page = "game"
                 st.rerun()
- 
+
 # GAME
 def game():
     prompt = PROMPTS[st.session_state.selected_prompt]
     elapsed = int(time.time() - st.session_state.start_time)
     remaining = max(10 - elapsed, 0)
- 
+
     # Auto-expire
     if remaining == 0:
         st.error("⏰ Time's up! Better luck next time.")
@@ -449,9 +449,9 @@ def game():
         st.session_state.leaderboard.append({"name": st.session_state.user, "score": 0})
         st.session_state.page = "leaderboard"
         st.rerun()
- 
+
     col_img, col_ctrl = st.columns([3, 2], gap="large")
- 
+
     with col_img:
         st.markdown(f"""
         <div style="margin-bottom:12px;">
@@ -459,7 +459,7 @@ def game():
         </div>
         """, unsafe_allow_html=True)
         st.image(prompt["image"], use_container_width=True)
- 
+
     with col_ctrl:
         danger_cls = "danger" if remaining <= 3 else ""
         st.markdown(f"""
@@ -474,9 +474,9 @@ def game():
             WHAT DO YOU SEE?
         </div>
         """, unsafe_allow_html=True)
- 
+
         guess = st.text_input("", placeholder="Type your answer…", label_visibility="collapsed", key="guess_input")
- 
+
         if st.button("Submit Answer  ✓"):
             if guess.lower() in prompt["answers"]:
                 st.success("✅ Nailed it! +10 points")
@@ -487,12 +487,12 @@ def game():
                 st.error(f"❌ Wrong! The answer was: {prompt['answers'][0].title()}")
                 play_sound("https://www.soundjay.com/button/beep-10.mp3")
                 score = 0
- 
+
             st.session_state.leaderboard.append({"name": st.session_state.user, "score": score})
             st.session_state.page = "leaderboard"
             time.sleep(1.5)
             st.rerun()
- 
+
         st.markdown("""
         <div style="margin-top:20px; padding:14px 16px; background:rgba(255,255,255,0.03);
                     border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
@@ -505,7 +505,7 @@ def game():
             </div>
         </div>
         """, unsafe_allow_html=True)
- 
+
 # LEADERBOARD
 def leaderboard():
     _, col, _ = st.columns([1, 3, 1])
@@ -516,11 +516,11 @@ def leaderboard():
             <div class="hero-title" style="font-size:clamp(32px,5vw,56px);">Leaderboard</div>
         </div>
         """, unsafe_allow_html=True)
- 
+
         sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x["score"], reverse=True)
         rank_classes = ["gold", "silver", "bronze"]
         rank_icons = ["🥇", "🥈", "🥉"]
- 
+
         for i, entry in enumerate(sorted_board):
             rc = rank_classes[i] if i < 3 else "other"
             icon = rank_icons[i] if i < 3 else f"#{i+1}"
@@ -534,9 +534,9 @@ def leaderboard():
                 <div class="lb-score">{entry['score']} pts</div>
             </div>
             """, unsafe_allow_html=True)
- 
+
         st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
- 
+
         c1, c2 = st.columns(2)
         with c1:
             if st.button("🔁  Play Again"):
@@ -546,7 +546,7 @@ def leaderboard():
             if st.button("🏠  Back to Home"):
                 st.session_state.page = "home"
                 st.rerun()
- 
+
 # ROUTER
 pages = {"home": home, "dashboard": dashboard, "game": game, "leaderboard": leaderboard}
 pages[st.session_state.page]()
