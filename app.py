@@ -1,6 +1,5 @@
 import streamlit as st
 import time
-import pandas as pd
 
 # --- 1. CARNIVAL CONFIGURATION (8 ELITE ROUNDS) ---
 GAMES = [
@@ -16,117 +15,145 @@ GAMES = [
 
 st.set_page_config(page_title="Prompt Picasso | Gen AI Carnival", layout="centered")
 
-# --- 2. CARNIVAL UI DESIGN ---
+# --- 2. CARNIVAL UI DESIGN & BACKGROUND ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Bungee+Spice&family=Space+Grotesk:wght@300;700&display=swap');
-    .stApp { background: radial-gradient(circle at center, #1a1a2e 0%, #020205 100%); color: #e0e0e0; font-family: 'Space Grotesk', sans-serif; }
-    .carnival-header { font-family: 'Bungee Spice', cursive; font-size: 3.5rem; text-align: center; margin-bottom: 0px; }
-    .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 2px solid rgba(255, 0, 255, 0.2); border-radius: 25px; padding: 30px; box-shadow: 0 0 30px rgba(255, 0, 255, 0.1); margin-bottom: 25px; }
-    .stButton>button { background: linear-gradient(45deg, #ff00ff, #00d2ff); color: white; border: none; border-radius: 50px; font-weight: 800; letter-spacing: 2px; height: 3.5rem; transition: 0.4s; width: 100%; }
-    .stButton>button:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255, 0, 255, 0.4); }
-    .player-chip { background: rgba(0, 210, 255, 0.1); border: 1px solid #00d2ff; padding: 5px 15px; border-radius: 15px; margin-right: 10px; display: inline-block; }
+    
+    .stApp {
+        background-image: linear-gradient(rgba(2, 2, 5, 0.8), rgba(2, 2, 5, 0.8)), 
+        url("https://images.unsplash.com/photo-1534796636912-3b95b3ab5986");
+        background-size: cover;
+        background-attachment: fixed;
+        color: #e0e0e0;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    .carnival-header { font-family: 'Bungee Spice', cursive; font-size: 3.5rem; text-align: center; margin-bottom: 0px; text-shadow: 2px 2px 10px rgba(255,0,255,0.5); }
+    .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 25px; margin-bottom: 20px; }
+    .stButton>button { background: linear-gradient(45deg, #7000ff, #00d2ff); color: white; border: none; border-radius: 12px; font-weight: 700; transition: 0.3s; width: 100%; }
+    .stButton>button:hover { transform: scale(1.02); box-shadow: 0 0 15px #00d2ff; }
+    .admin-box { border: 1px dashed #ff00ff; padding: 10px; border-radius: 10px; background: rgba(255,0,255,0.05); }
     </style>
     """, unsafe_allow_html=True)
 
 # --- 3. STATE INITIALIZATION ---
 if "step" not in st.session_state:
     st.session_state.step = "lobby"
-    st.session_state.players = []
+    st.session_state.players = [] # Persistent leaderboard
+    st.session_state.round_players = [] # Players registered for the current round
     st.session_state.round = 0
     st.session_state.p_turn = 0
     st.session_state.history = []
 
-# --- 4. LOBBY ---
+# --- 4. LOBBY / REGISTRATION (Runs before every round) ---
 if st.session_state.step == "lobby":
     st.markdown('<h1 class="carnival-header">PROMPT PICASSO</h1>', unsafe_allow_html=True)
-    st.markdown("<h4 style='text-align: center; color: #00d2ff;'>THE GRAND GEN AI CARNIVAL</h4>", unsafe_allow_html=True)
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    p_name = st.text_input("Enter Artist Name", placeholder="e.g. AI_Master")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("ADD PLAYER"):
-            if p_name and len(st.session_state.players) < 5:
-                st.session_state.players.append({"name": p_name, "total": 0})
+    st.markdown(f"<h3 style='text-align: center; color: #ff00ff;'>ROUND {st.session_state.round + 1} REGISTRATION</h3>", unsafe_allow_html=True)
+    
+    with st.container():
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            new_player = st.text_input("Enter Artist Name", key=f"reg_{st.session_state.round}", placeholder="e.g. PixelWizard")
+        with col2:
+            st.write("##")
+            if st.button("JOIN"):
+                if new_player and len(st.session_state.round_players) < 5:
+                    if not any(p['name'] == new_player for p in st.session_state.round_players):
+                        st.session_state.round_players.append({"name": new_player, "round_score": 0})
+                        st.rerun()
+                    else:
+                        st.warning("Name taken!")
+        
+        if st.session_state.round_players:
+            st.write("**Artists Ready for this Round:**")
+            cols = st.columns(len(st.session_state.round_players))
+            for i, p in enumerate(st.session_state.round_players):
+                cols[i].info(f"🎨 {p['name']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- ADMIN ACCESS SECTION ---
+    with st.expander("🔐 ADMIN CONTROL PANEL"):
+        st.write(f"Current Player Count: **{len(st.session_state.round_players)} / 5**")
+        if len(st.session_state.round_players) < 1:
+            st.error("Waiting for at least 1 player...")
+        else:
+            if st.button("🚀 START ROUND NOW"):
+                st.session_state.step = "playing"
                 st.rerun()
-    with col2:
-        if st.button("RESET LOBBY"):
-            st.session_state.players = []
-            st.rerun()
-    if st.session_state.players:
-        st.write("---")
-        for p in st.session_state.players:
-            st.markdown(f'<span class="player-chip">🎨 {p["name"]}</span>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    if 1 <= len(st.session_state.players) <= 5:
-        if st.button("🔥 START THE CARNIVAL"):
-            st.session_state.step = "playing"
+        
+        if st.button("Reset Current Lobby"):
+            st.session_state.round_players = []
             st.rerun()
 
 # --- 5. GAMEPLAY ---
 elif st.session_state.step == "playing":
     r_idx = st.session_state.round
     p_idx = st.session_state.p_turn
-    player = st.session_state.players[p_idx]
+    player = st.session_state.round_players[p_idx]
     
     st.title("🖌️ Performance Stage")
-    st.progress((r_idx * len(st.session_state.players) + p_idx + 1) / (8 * len(st.session_state.players)))
     st.subheader(f"Round {r_idx + 1}: {GAMES[r_idx]['title']}")
-    st.info(f"🎨 Artist Turn: **{player['name']}**")
+    st.write(f"**Artist's Turn:** :blue[{player['name']}]")
 
     st.image(GAMES[r_idx]["url"], use_container_width=True)
-    user_input = st.text_area("Describe this masterpiece in 1-2 lines...", key=f"in_{r_idx}_{p_idx}").lower()
+    user_input = st.text_area("Describe the image elements...", placeholder="Be descriptive!", key=f"play_{r_idx}_{p_idx}").lower()
     
-    if st.button("🎨 SUBMIT PROMPT"):
-        if len(user_input) < 10:
-            st.error("Too short! A Picasso needs more detail.")
+    if st.button("🎨 SUBMIT TO JUDGE"):
+        if len(user_input) < 5:
+            st.error("Too short!")
         else:
             targets = GAMES[r_idx]["targets"]
             matches = [w for w in targets if w in user_input]
             score = int((len(matches) / len(targets)) * 100)
             
-            st.session_state.players[p_idx]["total"] += score
-            st.session_state.history.append({"round": r_idx, "name": player['name'], "score": score})
+            # Update Score
+            st.session_state.round_players[p_idx]["round_score"] = score
             
-            if p_idx < len(st.session_state.players) - 1:
+            # Move to next player or review
+            if p_idx < len(st.session_state.round_players) - 1:
                 st.session_state.p_turn += 1
             else:
                 st.session_state.p_turn = 0
                 st.session_state.step = "round_review"
             st.rerun()
 
-# --- 6. ROUND LEADERBOARD ---
+# --- 6. ROUND REVIEW & SCORE MERGING ---
 elif st.session_state.step == "round_review":
-    r_idx = st.session_state.round
-    st.title(f"🏆 Round {r_idx + 1} Leaderboard")
-    st.markdown(f"**Masterpiece:** {GAMES[r_idx]['title']}")
+    st.title(f"🏆 Round {st.session_state.round + 1} Results")
     
-    round_data = [h for h in st.session_state.history if h['round'] == r_idx]
-    round_data = sorted(round_data, key=lambda x: x['score'], reverse=True)
-    
-    for i, res in enumerate(round_data):
-        st.markdown(f"**Rank {i+1}: {res['name']}** — `{res['score']} pts`")
-    
+    for p in st.session_state.round_players:
+        st.write(f"**{p['name']}** scored `{p['round_score']} pts`")
+        
+        # Merge into global leaderboard
+        existing = next((item for item in st.session_state.players if item["name"] == p["name"]), None)
+        if existing:
+            existing["total"] += p["round_score"]
+        else:
+            st.session_state.players.append({"name": p["name"], "total": p["round_score"]})
+
     st.divider()
-    btn_text = "NEXT ROUND 🎡" if r_idx < 7 else "GRAND FINALE 🏆"
-    if st.button(btn_text):
-        if r_idx < 7:
+    if st.button("PROCEED"):
+        if st.session_state.round < 7:
             st.session_state.round += 1
-            st.session_state.step = "playing"
+            st.session_state.round_players = [] # Clear for new registration
+            st.session_state.step = "lobby"
         else:
             st.session_state.step = "final"
         st.rerun()
 
-# --- 7. FINAL STANDINGS ---
+# --- 7. GRAND FINALE ---
 elif st.session_state.step == "final":
     st.balloons()
     st.markdown('<h1 class="carnival-header">GRAND FINALE</h1>', unsafe_allow_html=True)
     final_sorted = sorted(st.session_state.players, key=lambda x: x['total'], reverse=True)
+    
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     for i, p in enumerate(final_sorted):
         medal = "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else "🏅"
         st.subheader(f"{medal} {p['name']} — Total: {p['total']} pts")
     st.markdown('</div>', unsafe_allow_html=True)
-    if st.button("RESTART CARNIVAL"):
+    
+    if st.button("NEW CARNIVAL"):
         st.session_state.clear()
         st.rerun()
