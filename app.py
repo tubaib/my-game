@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 import streamlit.components.v1 as components
 
 # CONFIG
@@ -365,7 +364,7 @@ PROMPTS = [
 # SESSION
 for k, v in {
     "page": "home", "user": "", "selected_prompt": None,
-    "leaderboard": [], "start_time": None
+    "leaderboard": []
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -432,23 +431,12 @@ def dashboard():
             """, unsafe_allow_html=True)
             if st.button(f"Play →", key=f"btn_{i}"):
                 st.session_state.selected_prompt = i
-                st.session_state.start_time = time.time()
                 st.session_state.page = "game"
                 st.rerun()
 
 # GAME
 def game():
     prompt = PROMPTS[st.session_state.selected_prompt]
-    elapsed = int(time.time() - st.session_state.start_time)
-    remaining = max(10 - elapsed, 0)
-
-    # Auto-expire
-    if remaining == 0:
-        st.error("⏰ Time's up! Better luck next time.")
-        play_sound("https://www.soundjay.com/button/beep-10.mp3")
-        st.session_state.leaderboard.append({"name": st.session_state.user, "score": 0})
-        st.session_state.page = "leaderboard"
-        st.rerun()
 
     col_img, col_ctrl = st.columns([3, 2], gap="large")
 
@@ -461,15 +449,7 @@ def game():
         st.image(prompt["image"], use_container_width=True)
 
     with col_ctrl:
-        danger_cls = "danger" if remaining <= 3 else ""
-        st.markdown(f"""
-        <div class="glass-card" style="text-align:center; margin-bottom:24px;">
-            <div class="timer-ring-wrap">
-                <div class="timer-label">Time remaining</div>
-                <div class="timer-ring {danger_cls}">{remaining:02d}</div>
-                <div class="timer-label">seconds</div>
-            </div>
-        </div>
+        st.markdown("""
         <div style="margin-bottom:8px; font-size:13px; color:#64748b; font-weight:500;">
             WHAT DO YOU SEE?
         </div>
@@ -490,7 +470,6 @@ def game():
 
             st.session_state.leaderboard.append({"name": st.session_state.user, "score": score})
             st.session_state.page = "leaderboard"
-            time.sleep(1.5)
             st.rerun()
 
         st.markdown("""
