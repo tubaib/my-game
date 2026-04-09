@@ -1,589 +1,558 @@
+
+Copy
+
 import streamlit as st
 import time
 import streamlit.components.v1 as components
-
-# ------------------ CONFIG ------------------
-st.set_page_config(page_title="Gen AI Carnival", layout="wide", initial_sidebar_state="collapsed")
-
-# ------------------ PREMIUM CSS ------------------
+ 
+# ─── CONFIG ───────────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Gen AI Carnival", page_icon="🎡", layout="wide")
+ 
+# ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap)');
-
-/* Hide Streamlit defaults */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-
-/* Main background with animated gradient */
-.stApp {
-    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
+/* ── Reset & base ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+[data-testid="stAppViewContainer"] {
+    background: #0a0a12;
+    min-height: 100vh;
 }
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stSidebar"] { display: none; }
+ 
+/* ── Typography ── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+ 
+html, body, [class*="css"] {
+    font-family: 'Space Grotesk', sans-serif;
 }
-
-/* Floating particles effect */
-.stApp::before {
+ 
+/* ── Animated starfield background ── */
+[data-testid="stAppViewContainer"]::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        radial-gradient(2px 2px at 20px 30px, #eee, transparent),
-        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
-        radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 160px 120px, #ddd, transparent);
-    background-size: 200px 200px;
-    animation: sparkle 4s linear infinite;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(56,189,248,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 50% 50%, rgba(168,85,247,0.08) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
 }
-
-@keyframes sparkle {
-    from { transform: translateY(0); }
-    to { transform: translateY(-200px); }
+ 
+/* ── Page content sits above bg ── */
+[data-testid="block-container"] {
+    position: relative;
+    z-index: 1;
+    padding-top: 2rem !important;
+    max-width: 1200px !important;
+    margin: 0 auto;
 }
-
-/* Main Title */
-.main-title {
-    text-align: center;
-    font-family: 'Orbitron', monospace;
-    font-size: 72px;
-    font-weight: 900;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 25%, #4facfe 50%, #00f2fe 75%, #43e97b 100%);
-    background-size: 300% 300%;
+ 
+/* ── HERO title ── */
+.hero-badge {
+    display: inline-block;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #a5b4fc;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+.hero-title {
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 700;
+    background: linear-gradient(135deg, #e0e7ff 0%, #a5b4fc 40%, #38bdf8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: textGradient 5s ease infinite;
-    text-shadow: 0 0 80px rgba(79, 172, 254, 0.5);
-    margin-bottom: 0;
-    letter-spacing: 4px;
+    line-height: 1.1;
+    margin-bottom: 16px;
 }
-
-@keyframes textGradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* Subtitle */
-.subtitle {
-    text-align: center;
-    font-family: 'Poppins', sans-serif;
-    font-size: 24px;
-    color: #a78bfa;
-    margin-bottom: 50px;
-    letter-spacing: 8px;
-    text-transform: uppercase;
-    opacity: 0.9;
-}
-
-/* Welcome text */
-.welcome-text {
-    text-align: center;
-    font-family: 'Orbitron', monospace;
-    font-size: 42px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 10px;
-    text-shadow: 0 0 30px rgba(167, 139, 250, 0.8);
-}
-
-/* Glass Card */
-.glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 20px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.5s;
-}
-
-.glass-card:hover::before {
-    left: 100%;
-}
-
-.glass-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 
-        0 25px 50px rgba(79, 172, 254, 0.3),
-        0 0 100px rgba(167, 139, 250, 0.2),
-        inset 0 0 60px rgba(255, 255, 255, 0.05);
-    border-color: rgba(167, 139, 250, 0.5);
-}
-
-/* Neon Button */
-.stButton > button {
-    width: 100%;
-    border-radius: 16px;
-    height: 55px;
+.hero-sub {
     font-size: 18px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    background-size: 200% 200%;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-    animation: buttonPulse 2s ease-in-out infinite;
+    color: #64748b;
+    font-weight: 400;
+    margin-bottom: 40px;
 }
-
-@keyframes buttonPulse {
-    0%, 100% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4); }
-    50% { box-shadow: 0 10px 60px rgba(102, 126, 234, 0.6), 0 0 30px rgba(240, 147, 251, 0.3); }
-}
-
-.stButton > button:hover {
-    background-position: 100% 50%;
-    transform: translateY(-3px);
-    box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6), 0 0 40px rgba(240, 147, 251, 0.4);
-}
-
-.stButton > button:active {
-    transform: translateY(0);
-}
-
-/* Input Field */
-.stTextInput > div > div > input {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 2px solid rgba(167, 139, 250, 0.3) !important;
-    border-radius: 16px !important;
-    color: #fff !important;
-    font-size: 18px !important;
-    padding: 15px 20px !important;
-    font-family: 'Poppins', sans-serif !important;
-    transition: all 0.3s ease !important;
-}
-
-.stTextInput > div > div > input:focus {
-    border-color: #a78bfa !important;
-    box-shadow: 0 0 30px rgba(167, 139, 250, 0.4) !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-}
-
-.stTextInput > div > div > input::placeholder {
-    color: rgba(255, 255, 255, 0.4) !important;
-}
-
-/* Leaderboard Entry */
-.leaderboard-entry {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
-    border: 1px solid rgba(255, 255, 255, 0.1);
+ 
+/* ── Glass card ── */
+.glass-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
     border-radius: 20px;
-    padding: 20px 30px;
-    margin-bottom: 15px;
+    padding: 28px;
+    backdrop-filter: blur(16px);
+    transition: all 0.3s ease;
+}
+.glass-card:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(99,102,241,0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.2);
+}
+ 
+/* ── Challenge card ── */
+.challenge-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+.challenge-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: rgba(99,102,241,0.5);
+    box-shadow: 0 20px 60px rgba(99,102,241,0.25);
+}
+.challenge-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.85) saturate(1.1);
+}
+.challenge-card-body {
+    padding: 16px;
+}
+.challenge-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+}
+.challenge-card-sub {
+    font-size: 12px;
+    color: #475569;
+    font-weight: 400;
+}
+ 
+/* ── Avatar ── */
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #38bdf8);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.leaderboard-entry:hover {
-    transform: translateX(10px);
-    border-color: rgba(167, 139, 250, 0.5);
-    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
-}
-
-.leaderboard-rank {
-    font-family: 'Orbitron', monospace;
-    font-size: 32px;
-    font-weight: 900;
-    background: linear-gradient(135deg, #ffd700, #ffaa00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    min-width: 60px;
-}
-
-.leaderboard-name {
-    font-family: 'Poppins', sans-serif;
+    justify-content: center;
     font-size: 22px;
-    color: #fff;
-    flex-grow: 1;
-    margin-left: 20px;
-}
-
-.leaderboard-score {
-    font-family: 'Orbitron', monospace;
-    font-size: 28px;
     font-weight: 700;
-    color: #4facfe;
-    text-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
-}
-
-/* Timer */
-.timer-container {
-    text-align: center;
-    margin: 30px 0;
-}
-
-.timer {
-    font-family: 'Orbitron', monospace;
-    font-size: 64px;
-    font-weight: 900;
     color: #fff;
-    text-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
-    animation: timerPulse 1s ease-in-out infinite;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    margin: 0 auto 16px;
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
 }
-
-.timer.warning {
-    color: #f5576c;
-    text-shadow: 0 0 40px rgba(245, 87, 108, 0.8);
+ 
+/* ── Timer ring ── */
+.timer-ring-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
 }
-
-@keyframes timerPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-/* Game Image */
-.game-image-container {
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(102, 126, 234, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 30px;
-}
-
-/* Section Title */
-.section-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 36px;
+.timer-ring {
+    font-size: 48px;
     font-weight: 700;
-    text-align: center;
-    color: #fff;
-    margin-bottom: 40px;
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+    color: #38bdf8;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 30px rgba(56,189,248,0.5);
 }
-
-/* Card Title */
-.card-title {
-    font-family: 'Poppins', sans-serif;
-    font-size: 18px;
+.timer-label {
+    font-size: 12px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.timer-ring.danger { color: #f87171; text-shadow: 0 0 30px rgba(248,113,113,0.6); }
+ 
+/* ── Score pill ── */
+.score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 15px;
     font-weight: 600;
-    color: #fff;
-    text-align: center;
-    margin-top: 15px;
+    color: #a5b4fc;
+}
+ 
+/* ── Leaderboard row ── */
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
     margin-bottom: 10px;
+    transition: all 0.2s;
 }
-
-/* Trophy Icon */
-.trophy-section {
+.lb-row:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(99,102,241,0.25);
+}
+.lb-rank {
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 40px;
     text-align: center;
-    font-size: 80px;
-    margin-bottom: 20px;
-    animation: bounce 2s ease-in-out infinite;
 }
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
+.lb-rank.gold   { color: #fbbf24; }
+.lb-rank.silver { color: #94a3b8; }
+.lb-rank.bronze { color: #92400e; }
+.lb-rank.other  { color: #475569; }
+.lb-name {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: #e2e8f0;
 }
-
-/* Success/Error Messages */
-.stSuccess, .stError {
-    border-radius: 16px !important;
-    font-family: 'Poppins', sans-serif !important;
+.lb-score {
+    font-size: 15px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 8px;
+    padding: 4px 14px;
 }
-
-/* Hide default label */
-.stTextInput label {
-    color: rgba(255, 255, 255, 0.7) !important;
-    font-family: 'Poppins', sans-serif !important;
+ 
+/* ── Input overrides ── */
+[data-testid="stTextInput"] input {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 12px !important;
+    color: #e2e8f0 !important;
     font-size: 16px !important;
+    padding: 12px 16px !important;
+    height: 50px !important;
+    transition: all 0.2s !important;
 }
-
-/* Decorative elements */
-.decoration-circle {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.3;
-    z-index: -1;
+[data-testid="stTextInput"] input:focus {
+    border-color: rgba(99,102,241,0.6) !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+    background: rgba(255,255,255,0.07) !important;
 }
-
-.circle-1 {
-    width: 400px;
-    height: 400px;
-    background: #667eea;
-    top: -100px;
-    right: -100px;
+[data-testid="stTextInput"] label {
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.05em !important;
 }
-
-.circle-2 {
-    width: 300px;
-    height: 300px;
-    background: #f093fb;
-    bottom: -50px;
-    left: -50px;
+ 
+/* ── Button overrides ── */
+.stButton > button {
+    width: 100% !important;
+    border-radius: 12px !important;
+    height: 50px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    transition: all 0.25s ease !important;
+    text-transform: none !important;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.35) !important;
 }
-
-/* Image styling */
-.stImage {
-    border-radius: 20px;
-    overflow: hidden;
+.stButton > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 30px rgba(99,102,241,0.5) !important;
+    filter: brightness(1.08) !important;
 }
-
-.stImage img {
-    border-radius: 20px;
+.stButton > button:active {
+    transform: translateY(0) !important;
+}
+ 
+/* ── Success / Error override ── */
+[data-testid="stSuccess"] {
+    background: rgba(52,211,153,0.1) !important;
+    border: 1px solid rgba(52,211,153,0.3) !important;
+    border-radius: 12px !important;
+    color: #6ee7b7 !important;
+}
+[data-testid="stError"] {
+    background: rgba(248,113,113,0.1) !important;
+    border: 1px solid rgba(248,113,113,0.3) !important;
+    border-radius: 12px !important;
+    color: #fca5a5 !important;
+}
+[data-testid="stWarning"] {
+    background: rgba(251,191,36,0.1) !important;
+    border: 1px solid rgba(251,191,36,0.3) !important;
+    border-radius: 12px !important;
+    color: #fde68a !important;
+}
+ 
+/* ── Image ── */
+[data-testid="stImage"] img {
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+ 
+/* ── Divider ── */
+hr {
+    border-color: rgba(255,255,255,0.06) !important;
+    margin: 24px 0 !important;
+}
+ 
+/* ── Section heading ── */
+.section-heading {
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+}
+ 
+/* ── Stat row ── */
+.stat-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.stat-chip {
+    flex: 1;
+    min-width: 100px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: center;
+}
+.stat-chip-val {
+    font-size: 24px;
+    font-weight: 700;
+    color: #e2e8f0;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.stat-chip-lbl {
+    font-size: 12px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 </style>
-
-<!-- Decorative circles -->
-<div class="decoration-circle circle-1"></div>
-<div class="decoration-circle circle-2"></div>
 """, unsafe_allow_html=True)
-
-# ------------------ SOUND EFFECT ------------------
+ 
+# ─── SOUND ────────────────────────────────────────────────────────────────────
 def play_sound(url):
-    components.html(f"""
-    <audio autoplay>
-        <source src="{url}" type="audio/mp3">
-    </audio>
-    """, height=0)
-
-# ------------------ CONFETTI ------------------
-def show_confetti():
-    components.html("""
-    <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/)[email protected]/dist/canvas-confetti.browser.min.js"></script>
-    <script>
-    confetti({
-        particleCount: 150,
-        spread: 180,
-        origin: { y: 0.6 },
-        colors: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b']
-    });
-    </script>
-    """, height=0)
-
-# ------------------ PROMPTS ------------------
+    components.html(f'<audio autoplay><source src="{url}" type="audio/mp3"></audio>', height=0)
+ 
+# ─── DATA ─────────────────────────────────────────────────────────────────────
 PROMPTS = [
-    {"title": "🏔️ Mountain", "emoji": "🏔️", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800)", "answers": ["mountain", "mountains"]},
-    {"title": "🌊 Ocean", "emoji": "🌊", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800)", "answers": ["ocean", "sea", "beach"]},
-    {"title": "🌃 City", "emoji": "🌃", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1494526585095-c41746248156?w=800)", "answers": ["city", "urban", "skyline"]},
-    {"title": "🚀 Space", "emoji": "🚀", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800)", "answers": ["space", "galaxy", "stars"]},
-    {"title": "🍔 Food", "emoji": "🍔", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800)", "answers": ["food", "meal", "dish"]},
-    {"title": "🐕 Dog", "emoji": "🐕", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1517849845537-4d257902454a?w=800)", "answers": ["dog", "puppy", "canine"]},
-    {"title": "🌲 Forest", "emoji": "🌲", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800)", "answers": ["tree", "forest", "nature", "trees"]},
-    {"title": "🏎️ Car", "emoji": "🏎️", "image": "[images.unsplash.com](https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800)", "answers": ["car", "vehicle", "automobile"]}
+    {"title": "Mountain",  "emoji": "🏔️",  "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80", "answers": ["mountain"]},
+    {"title": "Ocean",     "emoji": "🌊",  "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80", "answers": ["ocean","sea"]},
+    {"title": "City",      "emoji": "🏙️",  "image": "https://images.unsplash.com/photo-1494526585095-c41746248156?w=600&q=80", "answers": ["city"]},
+    {"title": "Space",     "emoji": "🌌",  "image": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&q=80", "answers": ["space"]},
+    {"title": "Food",      "emoji": "🍕",  "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80", "answers": ["food"]},
+    {"title": "Dog",       "emoji": "🐶",  "image": "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&q=80", "answers": ["dog"]},
+    {"title": "Forest",    "emoji": "🌳",  "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80", "answers": ["tree","forest"]},
+    {"title": "Car",       "emoji": "🚗",  "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&q=80", "answers": ["car"]},
 ]
-
-# ------------------ SESSION ------------------
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-if "user" not in st.session_state:
-    st.session_state.user = ""
-if "selected_prompt" not in st.session_state:
-    st.session_state.selected_prompt = None
-if "leaderboard" not in st.session_state:
-    st.session_state.leaderboard = []
-if "start_time" not in st.session_state:
-    st.session_state.start_time = None
-if "game_over" not in st.session_state:
-    st.session_state.game_over = False
-
-# ------------------ HOME ------------------
+ 
+# ─── SESSION ──────────────────────────────────────────────────────────────────
+for k, v in {
+    "page": "home", "user": "", "selected_prompt": None,
+    "leaderboard": [], "start_time": None
+}.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+ 
+# ─── HOME ─────────────────────────────────────────────────────────────────────
 def home():
-    st.markdown("")
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown('<div class="main-title">🎡 GEN AI CARNIVAL</div>', unsafe_allow_html=True)
-        st.markdown('<div class="subtitle">✨ From Prompts to Possibilities ✨</div>', unsafe_allow_html=True)
-        
-        st.markdown("")
-        st.markdown("")
-        
-        # Glass card for login
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<p style="text-align:center; color:#a78bfa; font-size:20px; font-family:Poppins; margin-bottom:20px;">Enter the Arena</p>', unsafe_allow_html=True)
-        
-        name = st.text_input("", placeholder="Your Name...", label_visibility="collapsed")
-        
-        st.markdown("")
-        
-        if st.button("🚀 ENTER CARNIVAL"):
-            if name:
-                st.session_state.user = name
+    _, col, _ = st.columns([1, 2, 1])
+    with col:
+        st.markdown("""
+        <div style="text-align:center; padding: 60px 0 40px;">
+            <div class="hero-badge">✦ Powered by Generative AI</div>
+            <div class="hero-title">Gen AI<br>Carnival</div>
+            <div class="hero-sub">Visual challenges, lightning rounds,<br>and glory on the leaderboard.</div>
+        </div>
+        """, unsafe_allow_html=True)
+ 
+        st.markdown("""
+        <div class="stat-row">
+            <div class="stat-chip"><div class="stat-chip-val">8</div><div class="stat-chip-lbl">Challenges</div></div>
+            <div class="stat-chip"><div class="stat-chip-val">10s</div><div class="stat-chip-lbl">Per Round</div></div>
+            <div class="stat-chip"><div class="stat-chip-val">10</div><div class="stat-chip-lbl">Max Points</div></div>
+        </div>
+        """, unsafe_allow_html=True)
+ 
+        name = st.text_input("", placeholder="Enter your name to begin…", label_visibility="collapsed")
+ 
+        if st.button("Enter the Carnival  →"):
+            if name.strip():
+                st.session_state.user = name.strip()
                 st.session_state.page = "dashboard"
                 st.rerun()
             else:
-                st.warning("⚠️ Please enter your name to continue!")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# ------------------ DASHBOARD ------------------
+                st.warning("Please enter your name first.")
+ 
+# ─── DASHBOARD ────────────────────────────────────────────────────────────────
 def dashboard():
-    st.markdown(f'<div class="welcome-text">Welcome, {st.session_state.user}! 👋</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">🎯 Choose Your Challenge</div>', unsafe_allow_html=True)
-    
-    # Create 2 rows of 4 cards
-    for row in range(2):
-        cols = st.columns(4)
-        for col_idx in range(4):
-            prompt_idx = row * 4 + col_idx
-            if prompt_idx < len(PROMPTS):
-                prompt = PROMPTS[prompt_idx]
-                with cols[col_idx]:
-                    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                    st.image(prompt["image"], use_container_width=True)
-                    st.markdown(f'<div class="card-title">{prompt["title"]}</div>', unsafe_allow_html=True)
-                    
-                    if st.button(f"PLAY", key=f"btn_{prompt_idx}"):
-                        st.session_state.selected_prompt = prompt_idx
-                        st.session_state.start_time = time.time()
-                        st.session_state.game_over = False
-                        st.session_state.page = "game"
-                        st.rerun()
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-# ------------------ GAME ------------------
+    initials = "".join(w[0].upper() for w in st.session_state.user.split()[:2])
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:20px; margin-bottom:40px; padding:24px 28px;
+                background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:20px;">
+        <div class="avatar" style="margin:0; flex-shrink:0;">{initials}</div>
+        <div>
+            <div style="font-size:22px; font-weight:700; color:#e2e8f0; line-height:1.2;">
+                Hey, {st.session_state.user}!
+            </div>
+            <div style="font-size:14px; color:#475569; margin-top:4px;">
+                Pick a challenge below — you've got 10 seconds to nail it.
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+ 
+    st.markdown('<div class="section-heading">Choose your challenge</div>', unsafe_allow_html=True)
+ 
+    cols = st.columns(4)
+    for i, prompt in enumerate(PROMPTS):
+        with cols[i % 4]:
+            st.markdown(f"""
+            <div class="challenge-card">
+                <img src="{prompt['image']}" alt="{prompt['title']}">
+                <div class="challenge-card-body">
+                    <div class="challenge-card-title">{prompt['emoji']} {prompt['title']}</div>
+                    <div class="challenge-card-sub">Guess the image</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"Play →", key=f"btn_{i}"):
+                st.session_state.selected_prompt = i
+                st.session_state.start_time = time.time()
+                st.session_state.page = "game"
+                st.rerun()
+ 
+# ─── GAME ─────────────────────────────────────────────────────────────────────
 def game():
     prompt = PROMPTS[st.session_state.selected_prompt]
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown(f'<div class="main-title">{prompt["emoji"]}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="section-title">What do you see?</div>', unsafe_allow_html=True)
-        
-        # Timer
-        elapsed = int(time.time() - st.session_state.start_time)
-        remaining = max(15 - elapsed, 0)
-        
-        timer_class = "timer warning" if remaining <= 5 else "timer"
-        st.markdown(f'''
-        <div class="timer-container">
-            <div class="{timer_class}">{remaining:02d}</div>
-            <p style="color:#a78bfa; font-family:Poppins;">seconds remaining</p>
+    elapsed = int(time.time() - st.session_state.start_time)
+    remaining = max(10 - elapsed, 0)
+ 
+    # Auto-expire
+    if remaining == 0:
+        st.error("⏰ Time's up! Better luck next time.")
+        play_sound("https://www.soundjay.com/button/beep-10.mp3")
+        st.session_state.leaderboard.append({"name": st.session_state.user, "score": 0})
+        st.session_state.page = "leaderboard"
+        st.rerun()
+ 
+    col_img, col_ctrl = st.columns([3, 2], gap="large")
+ 
+    with col_img:
+        st.markdown(f"""
+        <div style="margin-bottom:12px;">
+            <span class="score-pill">🎯 {prompt['emoji']} Round {st.session_state.selected_prompt + 1}</span>
         </div>
-        ''', unsafe_allow_html=True)
-        
-        # Image
-        st.markdown('<div class="game-image-container">', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
         st.image(prompt["image"], use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Check if time is up
-        if remaining == 0 and not st.session_state.game_over:
-            st.session_state.game_over = True
-            st.error("⏰ Time's up!")
-            play_sound("[soundjay.com](https://www.soundjay.com/button/beep-10.mp3)")
-            
-            st.session_state.leaderboard.append({
-                "name": st.session_state.user,
-                "score": 0,
-                "challenge": prompt["title"]
-            })
-            
-            time.sleep(1)
-            st.session_state.page = "leaderboard"
-            st.rerun()
-        
-        # Input
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        guess = st.text_input("", placeholder="Type your answer...", label_visibility="collapsed")
-        
-        st.markdown("")
-        
-        if st.button("⚡ SUBMIT ANSWER"):
-            if guess.lower().strip() in prompt["answers"]:
-                st.success("🎉 CORRECT! Amazing!")
-                show_confetti()
-                play_sound("[soundjay.com](https://www.soundjay.com/human/sounds/applause-01.mp3)")
-                score = max(10, remaining * 2)  # Bonus for speed
-            else:
-                st.error("❌ Not quite right!")
-                play_sound("[soundjay.com](https://www.soundjay.com/button/beep-10.mp3)")
-                score = 0
-            
-            st.session_state.leaderboard.append({
-                "name": st.session_state.user,
-                "score": score,
-                "challenge": prompt["title"]
-            })
-            
-            time.sleep(1.5)
-            st.session_state.page = "leaderboard"
-            st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# ------------------ LEADERBOARD ------------------
-def leaderboard():
-    st.markdown('<div class="trophy-section">🏆</div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-title">LEADERBOARD</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Hall of Fame</div>', unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x["score"], reverse=True)
-        
-        if not sorted_board:
-            st.markdown('<p style="text-align:center; color:#a78bfa; font-size:20px;">No scores yet. Be the first!</p>', unsafe_allow_html=True)
-        
-        for i, entry in enumerate(sorted_board[:10]):  # Top 10
-            rank_emoji = "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else "🎯"
-            
-            st.markdown(f'''
-            <div class="leaderboard-entry">
-                <div class="leaderboard-rank">{rank_emoji}</div>
-                <div class="leaderboard-name">{entry['name']}</div>
-                <div class="leaderboard-score">{entry['score']} pts</div>
+ 
+    with col_ctrl:
+        danger_cls = "danger" if remaining <= 3 else ""
+        st.markdown(f"""
+        <div class="glass-card" style="text-align:center; margin-bottom:24px;">
+            <div class="timer-ring-wrap">
+                <div class="timer-label">Time remaining</div>
+                <div class="timer-ring {danger_cls}">{remaining:02d}</div>
+                <div class="timer-label">seconds</div>
             </div>
-            ''', unsafe_allow_html=True)
-        
-        st.markdown("")
-        st.markdown("")
-        
-        if st.button("🔥 PLAY AGAIN"):
-            st.session_state.page = "dashboard"
+        </div>
+        <div style="margin-bottom:8px; font-size:13px; color:#64748b; font-weight:500;">
+            WHAT DO YOU SEE?
+        </div>
+        """, unsafe_allow_html=True)
+ 
+        guess = st.text_input("", placeholder="Type your answer…", label_visibility="collapsed", key="guess_input")
+ 
+        if st.button("Submit Answer  ✓"):
+            if guess.lower() in prompt["answers"]:
+                st.success("✅ Nailed it! +10 points")
+                st.balloons()
+                play_sound("https://www.soundjay.com/human/cheering-01.mp3")
+                score = 10
+            else:
+                st.error(f"❌ Wrong! The answer was: {prompt['answers'][0].title()}")
+                play_sound("https://www.soundjay.com/button/beep-10.mp3")
+                score = 0
+ 
+            st.session_state.leaderboard.append({"name": st.session_state.user, "score": score})
+            st.session_state.page = "leaderboard"
+            time.sleep(1.5)
             st.rerun()
-        
-        st.markdown("")
-        
-        if st.button("🏠 HOME"):
-            st.session_state.page = "home"
-            st.rerun()
-
-# ------------------ ROUTER ------------------
-if st.session_state.page == "home":
-    home()
-elif st.session_state.page == "dashboard":
-    dashboard()
-elif st.session_state.page == "game":
-    game()
-elif st.session_state.page == "leaderboard":
-    leaderboard()
+ 
+        st.markdown("""
+        <div style="margin-top:20px; padding:14px 16px; background:rgba(255,255,255,0.03);
+                    border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
+            <div style="font-size:12px; color:#475569; text-transform:uppercase; letter-spacing:0.08em;
+                        margin-bottom:8px;">Hints</div>
+            <div style="font-size:13px; color:#64748b; line-height:1.7;">
+                • Look at the overall scene<br>
+                • One-word answers work best<br>
+                • Synonyms are accepted
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+ 
+# ─── LEADERBOARD ──────────────────────────────────────────────────────────────
+def leaderboard():
+    _, col, _ = st.columns([1, 3, 1])
+    with col:
+        st.markdown("""
+        <div style="text-align:center; margin-bottom:40px;">
+            <div class="hero-badge">✦ Results</div>
+            <div class="hero-title" style="font-size:clamp(32px,5vw,56px);">Leaderboard</div>
+        </div>
+        """, unsafe_allow_html=True)
+ 
+        sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x["score"], reverse=True)
+        rank_classes = ["gold", "silver", "bronze"]
+        rank_icons = ["🥇", "🥈", "🥉"]
+ 
+        for i, entry in enumerate(sorted_board):
+            rc = rank_classes[i] if i < 3 else "other"
+            icon = rank_icons[i] if i < 3 else f"#{i+1}"
+            initials = "".join(w[0].upper() for w in entry["name"].split()[:2])
+            st.markdown(f"""
+            <div class="lb-row">
+                <div class="lb-rank {rc}">{icon}</div>
+                <div class="avatar" style="width:38px;height:38px;font-size:14px;margin:0;flex-shrink:0;
+                                            box-shadow:0 0 0 3px rgba(99,102,241,0.2);">{initials}</div>
+                <div class="lb-name">{entry['name']}</div>
+                <div class="lb-score">{entry['score']} pts</div>
+            </div>
+            """, unsafe_allow_html=True)
+ 
+        st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+ 
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("🔁  Play Again"):
+                st.session_state.page = "dashboard"
+                st.rerun()
+        with c2:
+            if st.button("🏠  Back to Home"):
+                st.session_state.page = "home"
+                st.rerun()
+ 
+# ─── ROUTER ───────────────────────────────────────────────────────────────────
+pages = {"home": home, "dashboard": dashboard, "game": game, "leaderboard": leaderboard}
+pages[st.session_state.page]()
