@@ -1,14 +1,11 @@
-
-
-
 import streamlit as st
 import time
 import streamlit.components.v1 as components
  
-# ─── CONFIG ───────────────────────────────────────────────────────────────────
+# CONFIG
 st.set_page_config(page_title="Gen AI Carnival", page_icon="🎡", layout="wide")
  
-# ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
+# GLOBAL CSS
 st.markdown("""
 <style>
 /* ── Reset & base ── */
@@ -22,10 +19,9 @@ st.markdown("""
 [data-testid="stSidebar"] { display: none; }
  
 /* ── Typography ── */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
  
 html, body, [class*="css"] {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
  
 /* ── Animated starfield background ── */
@@ -350,11 +346,11 @@ hr {
 </style>
 """, unsafe_allow_html=True)
  
-# ─── SOUND ────────────────────────────────────────────────────────────────────
+# SOUND
 def play_sound(url):
     components.html(f'<audio autoplay><source src="{url}" type="audio/mp3"></audio>', height=0)
  
-# ─── DATA ─────────────────────────────────────────────────────────────────────
+# DATA
 PROMPTS = [
     {"title": "Mountain",  "emoji": "🏔️",  "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80", "answers": ["mountain"]},
     {"title": "Ocean",     "emoji": "🌊",  "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80", "answers": ["ocean","sea"]},
@@ -366,7 +362,7 @@ PROMPTS = [
     {"title": "Car",       "emoji": "🚗",  "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&q=80", "answers": ["car"]},
 ]
  
-# ─── SESSION ──────────────────────────────────────────────────────────────────
+# SESSION
 for k, v in {
     "page": "home", "user": "", "selected_prompt": None,
     "leaderboard": [], "start_time": None
@@ -374,22 +370,20 @@ for k, v in {
     if k not in st.session_state:
         st.session_state[k] = v
  
-# ─── HOME ─────────────────────────────────────────────────────────────────────
+# HOME
 def home():
     _, col, _ = st.columns([1, 2, 1])
     with col:
         st.markdown("""
         <div style="text-align:center; padding: 60px 0 40px;">
-            <div class="hero-badge">✦ Powered by Generative AI</div>
             <div class="hero-title">Gen AI<br>Carnival</div>
-            <div class="hero-sub">Visual challenges, lightning rounds,<br>and glory on the leaderboard.</div>
+            <div class="hero-sub">From Prompts to Possibilities</div>
         </div>
         """, unsafe_allow_html=True)
  
         st.markdown("""
         <div class="stat-row">
             <div class="stat-chip"><div class="stat-chip-val">8</div><div class="stat-chip-lbl">Challenges</div></div>
-            <div class="stat-chip"><div class="stat-chip-val">10s</div><div class="stat-chip-lbl">Per Round</div></div>
             <div class="stat-chip"><div class="stat-chip-val">10</div><div class="stat-chip-lbl">Max Points</div></div>
         </div>
         """, unsafe_allow_html=True)
@@ -404,7 +398,7 @@ def home():
             else:
                 st.warning("Please enter your name first.")
  
-# ─── DASHBOARD ────────────────────────────────────────────────────────────────
+# DASHBOARD
 def dashboard():
     initials = "".join(w[0].upper() for w in st.session_state.user.split()[:2])
     st.markdown(f"""
@@ -442,7 +436,7 @@ def dashboard():
                 st.session_state.page = "game"
                 st.rerun()
  
-# ─── GAME ─────────────────────────────────────────────────────────────────────
+# GAME
 def game():
     prompt = PROMPTS[st.session_state.selected_prompt]
     elapsed = int(time.time() - st.session_state.start_time)
@@ -512,7 +506,7 @@ def game():
         </div>
         """, unsafe_allow_html=True)
  
-# ─── LEADERBOARD ──────────────────────────────────────────────────────────────
+# LEADERBOARD
 def leaderboard():
     _, col, _ = st.columns([1, 3, 1])
     with col:
@@ -553,6 +547,6 @@ def leaderboard():
                 st.session_state.page = "home"
                 st.rerun()
  
-# ─── ROUTER ───────────────────────────────────────────────────────────────────
+# ROUTER
 pages = {"home": home, "dashboard": dashboard, "game": game, "leaderboard": leaderboard}
 pages[st.session_state.page]()
