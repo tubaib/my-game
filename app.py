@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- 1. GAME CONFIGURATION (8 ROUNDS) ---
+# --- GAME CONFIG ---
 GAMES = [
     {"url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe", "targets": ["abstract", "geometry", "lines", "blue", "minimal"], "title": "Digital Dreamscape"},
     {"url": "https://images.unsplash.com/photo-1605142859862-978be7eba909", "targets": ["architecture", "modern", "stairs", "white", "symmetry"], "title": "The Infinite Staircase"},
@@ -14,11 +14,7 @@ GAMES = [
 
 st.set_page_config(page_title="Prompt Picasso", layout="centered")
 
-# --- 2. GET ROUND FROM URL ---
-query_params = st.query_params
-round_no = int(query_params.get("round", 1)) - 1  # 0-based
-
-# --- 3. UI DESIGN ---
+# --- UI ---
 st.markdown("""
 <style>
 .stApp {
@@ -30,63 +26,54 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 4. ROUND STORAGE ---
-if "round_data" not in st.session_state:
-    st.session_state.round_data = {}
+# --- STATE ---
+if "step" not in st.session_state:
+    st.session_state.step = "register"
+    st.session_state.players = []
+    st.session_state.current_player = 0
+    st.session_state.round = 0
 
-if round_no not in st.session_state.round_data:
-    st.session_state.round_data[round_no] = {
-        "players": [],
-        "started": False,
-        "turn": 0,
-        "finished": False
-    }
+# --- REGISTER ---
+if st.session_state.step == "register":
 
-room = st.session_state.round_data[round_no]
+    st.title("🎨 Prompt Picasso")
 
-st.title(f"🎨 Prompt Picasso - Round {round_no + 1}")
-st.subheader(GAMES[round_no]["title"])
+    name = st.text_input("Enter Your Name")
 
-# --- 5. LOBBY ---
-if not room["started"]:
-
-    name = st.text_input("Enter Player Name")
-
-    if st.button("Join Round"):
+    if st.button("Join Game"):
         if name:
-            if len(room["players"]) >= 5:
+            if len(st.session_state.players) >= 5:
                 st.error("Max 5 players allowed")
-            elif name in [p["name"] for p in room["players"]]:
+            elif name in [p["name"] for p in st.session_state.players]:
                 st.warning("Name already exists")
             else:
-                room["players"].append({"name": name, "score": 0})
+                st.session_state.players.append({
+                    "name": name,
+                    "scores": [0]*8,
+                    "total": 0
+                })
                 st.rerun()
 
-    # Show players
-    if room["players"]:
+    if st.session_state.players:
         st.write("### Players Joined:")
-        for p in room["players"]:
+        for p in st.session_state.players:
             st.success(p["name"])
 
-    # --- ADMIN CONTROL ---
-    st.markdown("### 🔐 Admin Panel")
-
-    if len(room["players"]) < 1:
-        st.error("Minimum 1 player required")
-    else:
-        if st.button("🚀 Start Round"):
-            room["started"] = True
+        if st.button("🚀 Start Game"):
+            st.session_state.step = "game"
             st.rerun()
 
-    st.stop()
+# --- GAME ---
+elif st.session_state.step == "game":
 
-# --- 6. GAMEPLAY ---
-if not room["finished"]:
+    r = st.session_state.round
+    p = st.session_state.current_player
+    player = st.session_state.players[p]
 
-    player = room["players"][room["turn"]]
+    st.subheader(f"Round {r+1}: {GAMES[r]['title']}")
+    st.write(f"🎯 Player: **{player['name']}**")
 
-    st.write(f"🎯 Turn: **{player['name']}**")
-    st.image(GAMES[round_no]["url"], use_container_width=True)
+    st.image(GAMES[r]["url"], use_container_width=True)
 
     text = st.text_area("Describe the image").lower()
 
@@ -95,21 +82,44 @@ if not room["finished"]:
         if len(text) < 5:
             st.error("Too short!")
         else:
-            targets = GAMES[round_no]["targets"]
+            targets = GAMES[r]["targets"]
             score = sum([1 for w in targets if w in text]) * 20
 
-            room["players"][room["turn"]]["score"] = score
+            player["scores"][r] = score
+            player["total"] += score
 
-            if room["turn"] < len(room["players"]) - 1:
-                room["turn"] += 1
+            # next player
+            if p < len(st.session_state.players) - 1:
+                st.session_state.current_player += 1
             else:
-                room["finished"] = True
+                st.session_state.current_player = 0
+                st.session_state.round += 1
+
+            # finish all rounds
+            if st.session_state.round >= 8:
+                st.session_state.step = "final"
 
             st.rerun()
 
-# --- 7. RESULT ---
-if room["finished"]:
-    st.subheader("🏆 Round Results")
+# --- FINAL ---
+elif st.session_state.step == "final":
 
-    for p in room["players"]:
-        st.write(f"{p['name']} → {p['score']} pts")
+    st.title("🏆 Final Leaderboard")
+
+    sorted_players = sorted(st.session_state.players, key=lambda x: x["total"], reverse=True)
+
+    for i, p in enumerate(sorted_players):
+        medal = ["🥇", "🥈", "🥉"]
+        icon = medal[i] if i < 3 else "🏅"
+        st.write(f"{icon} {p['name']} → {p['total']} pts")
+
+    st.divider()
+
+    st.subheader("🔗 Revisit Prompts")
+
+    for i, game in enumerate(GAMES):
+        st.markdown(f"[👉 Go to Round {i+1} - {game['title']}]({game['url']})")
+
+    if st.button("Restart"):
+        st.session_state.clear()
+        st.rerun()
