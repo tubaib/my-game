@@ -351,15 +351,73 @@ def play_sound(url):
 
 # DATA
 PROMPTS = [
-    {"title": "Mountain",  "emoji": "🏔️",  "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80", "answers": ["mountain"]},
-    {"title": "Ocean",     "emoji": "🌊",  "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80", "answers": ["ocean","sea"]},
-    {"title": "City",      "emoji": "🏙️",  "image": "https://images.unsplash.com/photo-1494526585095-c41746248156?w=600&q=80", "answers": ["city"]},
-    {"title": "Space",     "emoji": "🌌",  "image": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&q=80", "answers": ["space"]},
-    {"title": "Food",      "emoji": "🍕",  "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80", "answers": ["food"]},
-    {"title": "Dog",       "emoji": "🐶",  "image": "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&q=80", "answers": ["dog"]},
-    {"title": "Forest",    "emoji": "🌳",  "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80", "answers": ["tree","forest"]},
-    {"title": "Car",       "emoji": "🚗",  "image": "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&q=80", "answers": ["car"]},
+   PROMPTS = [
+    {
+        "title": "Sunset Beach", "emoji": "🌅",
+        "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
+        "answers": [
+            "a beautiful sunset over the ocean",
+            "sun setting on a beach with waves"
+        ]
+    },
+    {
+        "title": "Snow Mountains", "emoji": "🏔️",
+        "image": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80",
+        "answers": [
+            "snow covered mountains under blue sky",
+            "a mountain range filled with snow"
+        ]
+    },
+    {
+        "title": "City Night", "emoji": "🌃",
+        "image": "https://images.unsplash.com/photo-1494526585095-c41746248156?w=600&q=80",
+        "answers": [
+            "a city skyline at night with lights",
+            "bright city buildings glowing in the dark"
+        ]
+    },
+    {
+        "title": "Galaxy Space", "emoji": "🌌",
+        "image": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&q=80",
+        "answers": [
+            "a galaxy with stars and space",
+            "deep space filled with stars and nebula"
+        ]
+    },
+    {
+        "title": "Delicious Food", "emoji": "🍕",
+        "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80",
+        "answers": [
+            "a plate of delicious food",
+            "tasty meal served on a table"
+        ]
+    },
+    {
+        "title": "Cute Dog", "emoji": "🐶",
+        "image": "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&q=80",
+        "answers": [
+            "a cute dog looking at the camera",
+            "a small puppy sitting and staring"
+        ]
+    },
+    {
+        "title": "Green Forest", "emoji": "🌳",
+        "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
+        "answers": [
+            "a dense green forest with trees",
+            "sunlight passing through forest trees"
+        ]
+    },
+    {
+        "title": "Sports Car", "emoji": "🚗",
+        "image": "https://images.unsplash.com/photo-1493238792000-8113da705763?w=600&q=80",
+        "answers": [
+            "a fast sports car on the road",
+            "a luxury car driving on highway"
+        ]
+    }
 ]
+
 
 # SESSION
 for k, v in {
