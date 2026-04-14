@@ -350,7 +350,7 @@ def play_sound(url):
     components.html(f'<audio autoplay><source src="{url}" type="audio/mp3"></audio>', height=0)
 
 # DATA
-PROMPTS = [
+
    PROMPTS = [
     {
         "title": "Sunset Beach", "emoji": "🌅",
@@ -417,6 +417,7 @@ PROMPTS = [
         ]
     }
 ]
+
 
 
 # SESSION
