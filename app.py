@@ -1,5 +1,23 @@
 import streamlit as st
 import streamlit.components.v1 as components
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Load model once (IMPORTANT)
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def calculate_score(user_input, answers):
+    user_emb = model.encode([user_input])
+    
+    best_score = 0
+    
+    for ans in answers:
+        ans_emb = model.encode([ans])
+        similarity = cosine_similarity(user_emb, ans_emb)[0][0]
+        best_score = max(best_score, similarity)
+
+    # Convert 0–1 → 0–10
+    return round(best_score * 10, 2)
 
 # CONFIG
 st.set_page_config(page_title="Gen AI Carnival", page_icon="🎡", layout="wide")
@@ -514,15 +532,19 @@ def game():
         guess = st.text_input("", placeholder="Type your answer…", label_visibility="collapsed", key="guess_input")
 
         if st.button("Submit Answer  ✓"):
-            if guess.lower() in prompt["answers"]:
-                st.success("✅ Nailed it! +10 points")
-                st.balloons()
-                play_sound("https://www.soundjay.com/human/cheering-01.mp3")
-                score = 10
-            else:
-                st.error(f"❌ Wrong! The answer was: {prompt['answers'][0].title()}")
-                play_sound("https://www.soundjay.com/button/beep-10.mp3")
-                score = 0
+            score = calculate_score(guess, prompt["answers"])
+
+if score >= 8:
+    st.success(f"🔥 Excellent! Score: {score}/10")
+    st.balloons()
+    play_sound("https://www.soundjay.com/human/cheering-01.mp3")
+
+elif score >= 5:
+    st.warning(f"👍 Close! Score: {score}/10")
+
+else:
+    st.error(f"❌ Not close. Score: {score}/10\nCorrect answer: {prompt['answers'][0].title()}")
+    play_sound("https://www.soundjay.com/button/beep-10.mp3")
 
             st.session_state.leaderboard.append({"name": st.session_state.user, "score": score})
             st.session_state.page = "leaderboard"
